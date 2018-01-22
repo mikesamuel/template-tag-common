@@ -1,0 +1,7 @@
+package-lock.json
+test/**
+README.md
+.gitignore
+
+# Whoa!
+.npmignore
