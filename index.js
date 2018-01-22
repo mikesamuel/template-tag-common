@@ -179,8 +179,8 @@ function commonPrefixOfTemplateStrings ({ raw, length }) {
 const WS_RUN = /^[\t\u000B\u000C \u00A0\uFeFF]*/
 // https://www.ecma-international.org/ecma-262/6.0/#sec-line-terminators
 const LINE_TERMINATORS = /[\n\r\u2028\u2029]+/
-const LINE_TERMINATOR_AT_START = /^[\n\r\u2028\u2029]/
-const LINE_TERMINATOR_AT_END = /[\n\r\u2028\u2029]$/
+const LINE_TERMINATOR_AT_START = /^(?:\r\n?|[\n\u2028\u2029])/
+const LINE_TERMINATOR_AT_END = /(?:\r\n?|[\n\r\u2028\u2029])$/
 
 /**
  * Simplifies tripping common leading whitespace from a multiline
