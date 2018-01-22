@@ -156,6 +156,11 @@ Returns `{!function (!Array.<string>, ...*): R}` a template tag
 function that calls `computeStaticHelper` as needed on the static
 portion and returns the result of applying `computeResultHelper`.
 
+By splitting tagged template processing into separate static analysis
+and dynamic value handling phases, we encourage granting privilege to
+the static portions which the developer specifies and treating with
+suspicion the dynamic values which may be controlled by an attacker.
+
 ### `trimCommonWhitespaceFromLines(strings, options)`
 
 Simplifies tripping common leading whitespace from a multiline
@@ -184,8 +189,6 @@ function f () {
   // Indent level 2
 }
 ```
-
-is equivalent to the differently indented
 
 ```js
 function f () {
