@@ -5,7 +5,8 @@
   "keywords": [
     "template-tag",
     "string-template",
-    "sec-roadmap"
+    "sec-roadmap",
+    "es6"
   ],
   "main": "index.js",
   "files": [
