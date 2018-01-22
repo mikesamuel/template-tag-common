@@ -23,7 +23,8 @@ const {
   calledAsTemplateTag,
   calledAsTemplateTagQuick,
   memoizedTagFunction,
-  trimCommonWhitespaceFromLines
+  trimCommonWhitespaceFromLines,
+  TypedString
 } = require('../index')
 
 describe('template-tag-common', () => {
@@ -269,6 +270,9 @@ describe('template-tag-common', () => {
     // These tests come from the README.md.  If you make changes here,
     // be sure to reflect them there.
     it('csv', () => {
+      class CsvFragment extends TypedString {
+      }
+
       const csv = memoizedTagFunction(
         computeCsvContexts, interpolateValuesIntoCsv)
 
@@ -304,10 +308,19 @@ describe('template-tag-common', () => {
         const len = values.length
         let result = ''
         for (let i = 0; i < len; ++i) {
-          let escaped = JSON.stringify(String(values[i]))
-          if (contexts[i]) {
-            // already quoted
-            escaped = escaped.replace(/^"|"$/g, '')
+          const alreadyQuoted = contexts[i]
+          const value = values[i]
+          let escaped = null
+          if (value instanceof CsvFragment) {
+            // Allow a CSV fragment to specify multiple cells
+            escaped = alreadyQuoted
+              ? `"${value.content}"`
+              : value.content
+          } else {
+            escaped = JSON.stringify(String(values[i]))
+            if (alreadyQuoted) {
+              escaped = escaped.replace(/^"|"$/g, '')
+            }
           }
           result += raw[i]
           result += escaped
@@ -318,12 +331,12 @@ describe('template-tag-common', () => {
 
       expect(
         csv`
-          foo,${1},bar
-          ${'ab"c'},baz,"boo${'\n'}"
+          foo,${1},${new CsvFragment('bar,bar')}
+          ${'ab"c'},baz,"boo${'\n'}",far
           `)
         .to.equal(
-          'foo,"1",bar\n' +
-          '"ab\\"c",baz,"boo\\n"')
+          'foo,"1",bar,bar\n' +
+          '"ab\\"c",baz,"boo\\n",far')
     })
   })
 })

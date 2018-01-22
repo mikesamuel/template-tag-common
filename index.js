@@ -300,9 +300,28 @@ function cook (trv) {
     })
 }
 
+/**
+ * Wraps a content string so that `instanceof` checks can be used
+ * to test whether the string meets a specific contract.
+ *
+ * Template tags may `extend` this type to define wrapped strings
+ * with relevant contracts.
+ */
+class TypedString {
+  constructor (content) {
+    Object.defineProperty(
+      this, 'content',
+      { configurable: false, writable: false, value: String(content) })
+  }
+  toString () {
+    return this.content
+  }
+}
+
 module.exports = Object.freeze({
   calledAsTemplateTag,
   calledAsTemplateTagQuick,
   memoizedTagFunction,
-  trimCommonWhitespaceFromLines
+  trimCommonWhitespaceFromLines,
+  TypedString
 })

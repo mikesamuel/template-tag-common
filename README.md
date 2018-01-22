@@ -12,6 +12,93 @@ tags.
 See "[Tagged template literals][]" for details about how template tag
 handlers are called.
 
+## Example
+
+The example code below defines a CSV (Comma-separated value file)
+formatter that takes into account whether an interpolation happens
+inside quotes.
+
+```js
+const {
+  memoizedTagFunction,
+  trimCommonWhitespaceFromLines,
+  TypedString
+} = require('template-tag-common')
+
+class CsvFragment extends TypedString {
+}
+
+const csv = memoizedTagFunction(
+  computeCsvContexts, interpolateValuesIntoCsv)
+
+// memoizeTagFunction caches the results of this
+// if csv`...` happens inside a loop, this only
+// happens once.
+function computeCsvContexts (strings) {
+  const { raw } = trimCommonWhitespaceFromLines(
+    strings, { trimEolAtStart: true, trimEolAtEnd: true })
+  const contexts = []
+  let betweenQuotes = false
+  raw.forEach((chunk) => {
+    (/""?|\\./g.exec(chunk) || []).forEach((token) => {
+      if (token === '"') {
+        // "" and \" are escape sequences
+        betweenQuotes = !betweenQuotes
+      }
+    })
+    contexts.push(betweenQuotes)
+  })
+  if (betweenQuotes) {
+    const placeholder = '${...}'
+    throw new Error(
+      `Missing quote in CSV: \`${raw.join(placeholder)}\``)
+  }
+  return { raw, contexts }
+}
+
+// Called with the result above, then the static chunks of text, then the
+// dynamic values to compute the actual result.
+function interpolateValuesIntoCsv({ raw, contexts }, strings, values) {
+  const len = values.length
+  let result = ''
+  for (let i = 0; i < len; ++i) {
+    const alreadyQuoted = contexts[i]
+    const value = values[i]
+    let escaped = null
+    if (value instanceof CsvFragment) {
+      // Allow a CSV fragment to specify multiple cells
+      escaped = alreadyQuoted
+        ? `"${value.content}"`
+        : value.content
+    } else {
+      escaped = JSON.stringify(String(values[i]))
+      if (alreadyQuoted) {
+        escaped = escaped.replace(/^"|"$/g, '')
+      }
+    }
+    result += raw[i]
+    result += escaped
+  }
+  result += raw[len]
+  return new CsvFragment(result)
+}
+
+console.log(
+  '%s',
+  csv`
+    foo,${ 1 },${ new CsvFragment('bar,bar') }
+    ${ 'ab"c' },baz,"boo${ '\n' }",far`)
+// Logs something like
+// foo,1,bar,bar
+// "ab\"c",baz,"boo\n",far
+
+module.exports = {
+  csv,
+  CsvFragment
+}
+```
+
+
 ## API
 
 ### `calledAsTemplateTag(firstArgument, nArguments)`
@@ -68,68 +155,6 @@ the dynamic values.
 Returns `{!function (!Array.<string>, ...*): R}` a template tag
 function that calls `computeStaticHelper` as needed on the static
 portion and returns the result of applying `computeResultHelper`.
-
-```js
-const { memoizedTagFunction } = require('template-tag-common')
-
-// Define a CSV (Comma-separated value file) formatter that
-// takes into account whether an interpolation happens inside
-// quotes
-
-const csv = memoizedTagFunction(
-  computeCsvContexts, interpolateValuesIntoCsv)
-
-// memoizeTagFunction caches the results of this
-// if csv`...` happens inside a loop, this only
-// happens once.
-function computeCsvContexts (strings) {
-  const { raw } = trimCommonWhitespaceFromLines(
-    strings, { trimEolAtStart: true, trimEolAtEnd: true })
-  const contexts = []
-  let betweenQuotes = false
-  raw.forEach((chunk) => {
-    (/""?|\\./g.exec(chunk) || []).forEach((token) => {
-      if (token === '"') {
-        // "" and \" are escape sequences
-        betweenQuotes = !betweenQuotes
-      }
-    })
-    contexts.push(betweenQuotes)
-  })
-  if (betweenQuotes) {
-    const placeholder = '${...}'
-    throw new Error(
-      `Missing quote in CSV: \`${raw.join(placeholder)}\``)
-  }
-  return { raw, contexts }
-}
-
-// Called with the result above, then the static chunks of text, then the
-// dynamic values to compute the actual result.
-function interpolateValuesIntoCsv({ raw, contexts }, strings, values) {
-  const len = values.length
-  let result = ''
-  for (let i = 0; i < len; ++i) {
-    let escaped = JSON.stringify(String(values[i]))
-    if (contexts[i]) {
-      // already quoted
-      escaped = escaped.replace(/^"|"$/g, '')
-    }
-    result += raw[i]
-    result += escaped
-  }
-  result += raw[len]
-  return result
-}
-
-console.log(
-  csv`
-    foo,${ 1 },bar
-    ${ 'ab"c' },baz,"boo${ '\n' }"`)
-// Logs something like
-// foo,1,bar
-// "ab\"c",baz,"boo\n"
-```
 
 ### `trimCommonWhitespaceFromLines(strings, options)`
 
