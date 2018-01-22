@@ -49,7 +49,7 @@ typings/
 .node_repl_history
 
 # Output of 'npm pack'
-*.tgz
+template-tag-common-*.tgz
 
 # Yarn Integrity file
 .yarn-integrity
@@ -59,4 +59,5 @@ typings/
 
 # Emacs droppings
 *~
+.*~
 \#*
