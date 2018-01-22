@@ -56,8 +56,8 @@ function computeCsvContexts (strings) {
   return { raw, contexts }
 }
 
-// Called with the result above, then the static chunks of text, then the
-// dynamic values to compute the actual result.
+// Called with the contexts computed above, the static chunks of text,
+// then the dynamic values to compute the actual result.
 function interpolateValuesIntoCsv({ raw, contexts }, strings, values) {
   const len = values.length
   let result = ''
