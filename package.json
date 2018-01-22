@@ -18,6 +18,13 @@
   },
   "author": "@mikesamuel",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikesamuel/template-tag-common.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mikesamuel/template-tag-common/issues"
+  },
   "devDependencies": {
     "chai": ">=4.1.2",
     "eslint": ">=4.15.0",
