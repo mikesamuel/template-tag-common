@@ -31,12 +31,15 @@ Figure out what kind of release it is:
 *  minor
 *  major
 
+Assuming it is in `$NPM_VERSION_BUMP`
+
 ```sh
-npm version patch
+npm version "$NPM_VERSION_BUMP"
 ```
 
-Get a 2FA nonce.
+Get a 2FA nonce from the Google Authenticator app.
+Assuming it is in `$OTP`:
 
 ```sh
-npm publish --otp 
+npm publish --otp "$OTP"
 ```
