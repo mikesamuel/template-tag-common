@@ -254,5 +254,76 @@ describe('template-tag-common', () => {
         raw: [ '\n{\n  Hello, ', '!\n}' ]
       })
     })
+    it('line continuation', () => {
+      expect(trimmed`
+      foo\
+      bar`).to.deep.equal({
+        cooked: [ '\nfoobar' ],
+        raw: [ '\nfoo\\\nbar' ]
+      })
+    })
+  })
+
+  describe('example code from README', () => {
+    // WARNING:
+    // These tests come from the README.md.  If you make changes here,
+    // be sure to reflect them there.
+    it('csv', () => {
+      const csv = memoizedTagFunction(
+        computeCsvContexts, interpolateValuesIntoCsv)
+
+      // memoizeTagFunction caches the results of this
+      // if csv`...` happens inside a loop, this only
+      // happens once.
+      function computeCsvContexts (strings) {
+        const { raw } = trimCommonWhitespaceFromLines(
+          strings, { trimEolAtStart: true, trimEolAtEnd: true })
+        const contexts = []
+        let betweenQuotes = false
+        raw.forEach((chunk) => {
+          (/""?|\\./g.exec(chunk) || []).forEach((token) => {
+            if (token === '"') {
+              // "" and \" are escape sequences
+              betweenQuotes = !betweenQuotes
+            }
+          })
+          contexts.push(betweenQuotes)
+        })
+        if (betweenQuotes) {
+          // Standard JS complains about ${...} in a string literal
+          const placeholder = [ '$', '{...}' ].join('')
+          throw new Error(
+            `Missing quote in CSV: \`${raw.join(placeholder)}\``)
+        }
+        return { raw, contexts }
+      }
+
+      // Called with the result above, then the static chunks of text, then the
+      // dynamic values to compute the actual result.
+      function interpolateValuesIntoCsv ({ raw, contexts }, strings, values) {
+        const len = values.length
+        let result = ''
+        for (let i = 0; i < len; ++i) {
+          let escaped = JSON.stringify(String(values[i]))
+          if (contexts[i]) {
+            // already quoted
+            escaped = escaped.replace(/^"|"$/g, '')
+          }
+          result += raw[i]
+          result += escaped
+        }
+        result += raw[len]
+        return result
+      }
+
+      expect(
+        csv`
+          foo,${1},bar
+          ${'ab"c'},baz,"boo${'\n'}"
+          `)
+        .to.equal(
+          'foo,"1",bar\n' +
+          '"ab\\"c",baz,"boo\\n"')
+    })
   })
 })

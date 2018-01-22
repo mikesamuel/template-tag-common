@@ -119,10 +119,12 @@ function memoizedTagFunction (computeStaticHelper, computeResultHelper) {
     if (canMemoize) {
       staticState = memoTable.get(staticStrings)
     }
+    let failure = null
     if (!staticState) {
       try {
         staticState = { pass: computeStaticHelper(staticStrings) }
       } catch (exc) {
+        failure = exc
         staticState = { fail: exc.message || 'Failure' }
       }
       if (canMemoize) {
@@ -130,7 +132,7 @@ function memoizedTagFunction (computeStaticHelper, computeResultHelper) {
       }
     }
     if (staticState.fail) {
-      throw new Error(staticState.fail)
+      throw failure || new Error(staticState.fail)
     }
 
     return computeResultHelper(staticState.pass, staticStrings, dynamicValues)
@@ -149,11 +151,36 @@ function commonPrefixOf (a, b) { // eslint-disable-line id-length
   return a.substring(0, i)
 }
 
+function commonPrefixOfTemplateStrings ({ raw, length }) {
+  if (!LINE_TERMINATORS.exec(raw[0])) {
+    return ''
+  }
+  let commonPrefix = null
+  // Scan the raw array and compute the common prefix for each line.
+  for (let i = 0; i < length; ++i) {
+    const lines = String(raw[i]).split(LINE_TERMINATORS)
+    // Start at 1 since element 0 either follows a substitution or
+    // the starting back-tick.
+    for (let lnum = 1, nLines = lines.length; lnum < nLines; ++lnum) {
+      const [ prefix ] = WS_RUN.exec(lines[lnum])
+      commonPrefix = (commonPrefix === null)
+        ? prefix
+        : commonPrefixOf(commonPrefix, prefix)
+      if (!commonPrefix) {
+        break
+      }
+    }
+  }
+  return commonPrefix
+}
+
 // Matches zero or more Whitespace at the start of input
 // https://www.ecma-international.org/ecma-262/6.0/#sec-white-space
 const WS_RUN = /^[\t\u000B\u000C \u00A0\uFeFF]*/
 // https://www.ecma-international.org/ecma-262/6.0/#sec-line-terminators
 const LINE_TERMINATORS = /[\n\r\u2028\u2029]+/
+const LINE_TERMINATOR_AT_START = /^[\n\r\u2028\u2029]/
+const LINE_TERMINATOR_AT_END = /[\n\r\u2028\u2029]$/
 
 /**
  * Simplifies tripping common leading whitespace from a multiline
@@ -166,43 +193,43 @@ const LINE_TERMINATORS = /[\n\r\u2028\u2029]+/
  * https://www.ecma-international.org/ecma-262/6.0/#sec-white-space
  * https://www.ecma-international.org/ecma-262/6.0/#sec-line-terminators
  */
-function trimCommonWhitespaceFromLines (templateStrings) {
-  const { raw, length } = templateStrings
-  if (!LINE_TERMINATORS.exec(raw[0])) {
-    // Fast path
+function trimCommonWhitespaceFromLines (
+  templateStrings,
+  {
+    trimEolAtStart = false,
+    trimEolAtEnd = false
+  } = {}) {
+  // Find a common prefix to remove
+  const commonPrefix = commonPrefixOfTemplateStrings(templateStrings)
+
+  let prefixPattern = null
+  if (commonPrefix) {
+    // commonPrefix contains no RegExp metacharacters since it only contains
+    // whitespace.
+    prefixPattern = new RegExp(
+      `(${LINE_TERMINATORS.source})${commonPrefix}`, 'g')
+  } else if (trimEolAtStart || trimEolAtEnd) {
+    // We don't need to remove a prefix, but we might need to do some
+    // post processing, so just use a prefix pattern that never matches.
+    prefixPattern = /(?!)/
+  } else {
+    // Fast path.
     return templateStrings
   }
 
-  let commonPrefix = null
-  // Scan the raw array and compute the common prefix for each line.
-  for (let i = 0; i < length; ++i) {
-    const chunk = raw[i]
-    const lines = String(chunk).split(LINE_TERMINATORS)
-    // Start at 1 since element 0 either follows a substitution or
-    // the starting back-tick.
-    for (let lnum = 1, nLines = lines.length; lnum < nLines; ++lnum) {
-      const [ prefix ] = WS_RUN.exec(lines[lnum])
-      commonPrefix = (commonPrefix === null)
-        ? prefix
-        : commonPrefixOf(commonPrefix, prefix)
-      if (!commonPrefix) {
-        return templateStrings
-      }
-    }
-  }
+  const { raw, length } = templateStrings
 
-  // commonPrefix contains no RegExp metacharacters since it only contains
-  // whitespace.
-  const prefixPattern = new RegExp(
-    `(${LINE_TERMINATORS.source})${commonPrefix}`, 'g')
-
-  const trimmedRaw = []
-  const trimmedCooked = []
-  for (let i = 0; i < length; ++i) {
-    const trimmedChunk = raw[i].replace(prefixPattern, '$1')
-    trimmedRaw[i] = trimmedChunk
-    trimmedCooked[i] = cook(trimmedChunk)
+  // Apply slice so that raw is in the same realm as the tag function.
+  const trimmedRaw = Array.prototype.slice.apply(raw).map(
+    (chunk) => chunk.replace(prefixPattern, '$1'))
+  if (trimEolAtStart) {
+    trimmedRaw[0] = trimmedRaw[0].replace(LINE_TERMINATOR_AT_START, '')
   }
+  if (trimEolAtEnd) {
+    trimmedRaw[length - 1] = trimmedRaw[length - 1]
+      .replace(LINE_TERMINATOR_AT_END, '')
+  }
+  const trimmedCooked = trimmedRaw.map(cook)
 
   trimmedCooked.raw = trimmedRaw
   Object.freeze(trimmedRaw)
@@ -210,9 +237,18 @@ function trimCommonWhitespaceFromLines (templateStrings) {
   return trimmedCooked
 }
 
+// The parts between `|` match, in order:
+// *  Any non-special escaped character or special control sequence
+// *  2-digit hex escape
+// *  4-digit UTF-16 code-unit escape
+// *  Legacy octal escape
+// *  More legacy octal escape
+// *  Line continuation that uses a CR or CRLF
 const ESCAPE_SEQUENCE =
-  /\\(?:[^ux0-7]|x[0-9A-Fa-f]{0,2}|u[0-9A-Fa-f]{4}|[0-3][0-7]{0,2}|[4-7][0-7]?)/g
+  /\\(?:[^ux0-7\r]|x[0-9A-Fa-f]{0,2}|u[0-9A-Fa-f]{4}|[0-3][0-7]{0,2}|[4-7][0-7]?|\r\n?)/g
 
+// SV is defined in the ES 6 specification to be the string value of
+// an escape sequence.
 const SV_TABLE = {
   'b': '\u0008',
   't': '\u0009',
@@ -220,6 +256,7 @@ const SV_TABLE = {
   'v': '\u000B',
   'f': '\u000C',
   'r': '\u000D',
+  // Line continuations contribute no characters
   '\n': '',
   '\r': '',
   '\u2028': '',
