@@ -38,18 +38,20 @@ rm "$TARBALL"
 
 
 echo '
-Figure out what kind of release it is:
+1. Figure out what kind of release it is:
 *  patch
 *  minor
 *  major
 
 Assuming it is in `$NPM_VERSION_BUMP`:
-
 $ npm version "$NPM_VERSION_BUMP"
 
 
-Get a 2FA nonce from the Google Authenticator app.
+2. Get a 2FA nonce from the Google Authenticator app.
 Assuming it is in `$OTP`:
-
 $ npm publish --otp "$OTP"
+
+
+3. Push the release label to GitHub.
+$ git push origin master
 '
