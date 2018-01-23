@@ -1,4 +1,4 @@
-# Template Tag Common [![Build Status](https://travis-ci.org/mikesamuel/template-tag-common.svg?branch=master)](https://travis-ci.org/mikesamuel/template-tag-common) <img align="right" src="./images/logo.svg" alt="Sisyphus Logo">
+# Template Tag Common <img align="right" src="./images/logo.svg" alt="Sisyphus Logo">
 
 Simplifies authoring JS template tag handlers.
 
@@ -11,6 +11,10 @@ tags.
 
 See "[Tagged template literals][]" for details about how template tag
 handlers are called.
+
+[![Build Status](https://travis-ci.org/mikesamuel/template-tag-common.svg?branch=master)](https://travis-ci.org/mikesamuel/template-tag-common)
+[![Dependencies Status](https://david-dm.org/mikesamuel/template-tag-common/status.svg)](https://david-dm.org/mikesamuel/template-tag-common)
+[![npm](https://img.shields.io/npm/v/template-tag-common.svg)](https://www.npmjs.com/package/template-tag-common)
 
 ## Example
 
