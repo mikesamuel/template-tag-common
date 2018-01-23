@@ -1,4 +1,7 @@
-# Template Tag Common
+
+# Template Tag Common <img align="right" src="./images/logo.svg" alt="Sisyphus Logo">
+
+
 
 Simplifies authoring JS template tag handlers.
 
