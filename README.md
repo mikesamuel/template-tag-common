@@ -2,21 +2,22 @@
 
 # Template Tag Common
 
-Simplifies authoring JS template tag handlers.
-
-```js
-myTag`...`
-```
-
-invokes the `myTag` function.  This library is for authors of those
-tags.
-
-See "[Tagged template literals][]" for details about how template tag
-handlers are called.
-
 [![Build Status](https://travis-ci.org/mikesamuel/template-tag-common.svg?branch=master)](https://travis-ci.org/mikesamuel/template-tag-common)
 [![Dependencies Status](https://david-dm.org/mikesamuel/template-tag-common/status.svg)](https://david-dm.org/mikesamuel/template-tag-common)
 [![npm](https://img.shields.io/npm/v/template-tag-common.svg)](https://www.npmjs.com/package/template-tag-common)
+
+Simplifies authoring JS string template tags.  Tagged string templates
+allow embedding a mini-language with JavaScript, and the example below
+is syntactic sugar for a call to `myMiniLang`.
+
+```js
+myMiniLang`...`
+```
+
+This library makes it easier to write your own.
+See "[Tagged template literals][]" for details about how template tag
+functions are called.
+
 
 ## Example
 
@@ -24,16 +25,29 @@ The example code below defines a CSV (Comma-separated value file)
 formatter that takes into account whether an interpolation happens
 inside quotes.
 
+<!-- This example code also appears in test/test.js as a testcase.
+     If you change it here, reflect changes there. -->
+
 ```js
+// Import this library.
 const {
   memoizedTagFunction,
   trimCommonWhitespaceFromLines,
   TypedString
 } = require('template-tag-common')
 
+/**
+ * A fragment of CSV.
+ * Unlike simple strings, numbers, or Dates,
+ * fragments may span multiple cells.
+ */
 class CsvFragment extends TypedString {
 }
 
+/**
+ * A template tag function that composes a CSV fragment
+ * by ensuring that simple values are properly quoted.
+ */
 const csv = memoizedTagFunction(
   computeCsvContexts, interpolateValuesIntoCsv)
 
@@ -76,6 +90,7 @@ function interpolateValuesIntoCsv({ raw, contexts }, strings, values) {
       escaped = alreadyQuoted
         ? `"${value.content}"`
         : value.content
+    // TODO: maybe convert date to 2018-01-01T12:00:00Z format
     } else {
       escaped = JSON.stringify(String(values[i]))
       if (alreadyQuoted) {

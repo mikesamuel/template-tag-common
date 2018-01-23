@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-/* eslint "no-magic-numbers": off */
+/* eslint "no-magic-numbers": off, "no-warning-comments": off */
 
 const { expect } = require('chai')
 const { describe, it } = require('mocha')
@@ -270,9 +270,18 @@ describe('template-tag-common', () => {
     // These tests come from the README.md.  If you make changes here,
     // be sure to reflect them there.
     it('csv', () => {
+      /**
+       * A fragment of CSV.
+       * Unlike simple strings, numbers, or Dates,
+       * fragments may span multiple cells.
+       */
       class CsvFragment extends TypedString {
       }
 
+      /**
+       * A template tag function that composes a CSV fragment
+       * by ensuring that simple values are properly quoted.
+       */
       const csv = memoizedTagFunction(
         computeCsvContexts, interpolateValuesIntoCsv)
 
@@ -316,6 +325,7 @@ describe('template-tag-common', () => {
             escaped = alreadyQuoted
               ? `"${value.content}"`
               : value.content
+          // TODO: maybe convert date to 2018-01-01T12:00:00Z format
           } else {
             escaped = JSON.stringify(String(values[i]))
             if (alreadyQuoted) {
