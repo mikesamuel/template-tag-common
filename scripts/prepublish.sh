@@ -1,18 +1,28 @@
-# Checklist before publishing
+#!/bin/bash
 
-```sh
 set -e
 
+[ -n "$TMPDIR" ]
+[ -d "$TMPDIR" ]
+
 export PROJECT_NAME=$(node -e 'console.log(require("./package.json").name)')
-export TMP_WORKSPACE=/tmp/"$PROJECT_NAME"-test-workspace
+export TMP_WORKSPACE="$TMPDIR"/"$PROJECT_NAME"-test-workspace
+
+rm -rf "$TMP_WORKSPACE"
+mkdir -p "$TMP_WORKSPACE"/package
 
 # Repack, and check the contents
 export TARBALL="$(npm pack)"
+
+echo PACKAGE CONTENTS:
 tar tfz "$TARBALL"
 
+read -p 'Does the package contents look ok? (yes|no) ' PACKED_OK
+
+echo "$PACKED_OK" | egrep -qi '^y'
+
+
 # Test that it installs and tests run in isolation
-rm -rf "$TMP_WORKSPACE"
-mkdir -p "$TMP_WORKSPACE"/package
 cp "$TARBALL" "$TMP_WORKSPACE"/
 cp -r test/ "$TMP_WORKSPACE"/package/test/
 pushd "$TMP_WORKSPACE"
@@ -20,26 +30,26 @@ pushd "$TMP_WORKSPACE"
     pushd "$TMP_WORKSPACE"/package
       npm install \
       && npm test
-    popd
+    popd >& /dev/null
   )
-popd
-```
+popd >& /dev/null
 
+rm "$TARBALL"
+
+
+echo '
 Figure out what kind of release it is:
-
 *  patch
 *  minor
 *  major
 
-Assuming it is in `$NPM_VERSION_BUMP`
+Assuming it is in `$NPM_VERSION_BUMP`:
 
-```sh
-npm version "$NPM_VERSION_BUMP"
-```
+$ npm version "$NPM_VERSION_BUMP"
+
 
 Get a 2FA nonce from the Google Authenticator app.
 Assuming it is in `$OTP`:
 
-```sh
-npm publish --otp "$OTP"
-```
+$ npm publish --otp "$OTP"
+'
