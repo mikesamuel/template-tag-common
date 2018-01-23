@@ -1,4 +1,4 @@
-# Template Tag Common <img align="right" src="./images/logo.svg" alt="Sisyphus Logo">
+# Template Tag Common <img align="right" src="https://cdn.rawgit.com/mikesamuel/template-tag-common/40db28222da96d99e1aa35b0b541ffe5c70eaf35/images/logo.svg" alt="Sisyphus Logo">
 
 Simplifies authoring JS template tag handlers.
 

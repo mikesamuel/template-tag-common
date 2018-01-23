@@ -10,8 +10,7 @@
   ],
   "main": "index.js",
   "files": [
-    "index.js",
-    "images/logo.svg"
+    "index.js"
   ],
   "dependencies": {},
   "scripts": {
