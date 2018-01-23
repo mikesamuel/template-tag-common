@@ -1,7 +1,4 @@
-
-# Template Tag Common <img align="right" src="./images/logo.svg" alt="Sisyphus Logo">
-
-
+# Template Tag Common [![Build Status](https://travis-ci.org/mikesamuel/template-tag-common.svg?branch=master)](https://travis-ci.org/mikesamuel/template-tag-common) <img align="right" src="./images/logo.svg" alt="Sisyphus Logo">
 
 Simplifies authoring JS template tag handlers.
 
