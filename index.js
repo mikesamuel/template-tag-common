@@ -89,10 +89,22 @@ function requireValidTagInputs (staticStrings, dynamicValues) {
 }
 
 /**
+ * A function that either takes an options object (O), in which case it returns
+ * another configurableTemplateTag; or it takes a TemplateObject and returns a result of
+ * type R.
+ *
+ * @template O
+ * @template R
+ * @typedef {!function (O|Array.<string>, ...*): (configurableTemplateTag<O, R>|R)}
+ */
+let configurableTemplateTag  // eslint-disable-line
+
+/**
  * Memoizes operations on the static portions so the per-use cost
  * of a tagged template literal is related to the complexity of handling
  * the dynamic values.
  *
+ * @template O
  * @template R
  * @template T
  * @param {!function (Array.<string>): T} computeStaticHelper
@@ -100,19 +112,24 @@ function requireValidTagInputs (staticStrings, dynamicValues) {
  *   frozen static strings object, and cached weakly thereafter.
  *   Receives a string of arrays with a {@code .raw} property that is
  *   a string array of the same length.
- * @param {!function (T, !Array.<string>, !Array.<*>): R} computeResultHelper
+ * @param {!function (O, T, !Array.<string>, !Array.<*>): R} computeResultHelper
  *    a function that takes three parameters:
- * @return {!function (!Array.<string>, ...*): R}
- *    a template tag function that calls computeStaticHelper as needed
+ * @return {configurableTemplateTag<O, R>}
+ *    A function that either takes an options object (O), in which case it returns
+ *    another configurableTemplateTag; or it takes a TemplateObject and returns a result of
+ *    type R.
+ *    When used as a template tag it calls computeStaticHelper as needed
  *    on the static portion and returns the result of applying
  *    computeResultHelper.
  */
 function memoizedTagFunction (computeStaticHelper, computeResultHelper) {
   const memoTable = new WeakMap()
 
-  return (staticStrings, ...dynamicValues) => {
-    requireValidTagInputs(staticStrings, dynamicValues)
-
+  /**
+   * @param {!Array.<string>} staticStrings
+   * @return {T}
+   */
+  function staticStateFor (staticStrings) {
     let staticState = null
     const canMemoize = Object.isFrozen(staticStrings) &&
           Object.isFrozen(staticStrings.raw)
@@ -134,9 +151,27 @@ function memoizedTagFunction (computeStaticHelper, computeResultHelper) {
     if (staticState.fail) {
       throw failure || new Error(staticState.fail)
     }
-
-    return computeResultHelper(staticState.pass, staticStrings, dynamicValues)
+    return staticState.pass
   }
+
+  /** @param {O} options */
+  function usingOptions (options) {
+    return (staticStringsOrOptions, ...dynamicValues) => {
+      // If we've only been passed an options object,
+      // return a template tag that uses it.
+      if (dynamicValues.length === 0 && !Array.isArray(staticStringsOrOptions)) {
+        return usingOptions(staticStringsOrOptions)
+      }
+
+      const staticStrings = staticStringsOrOptions
+      requireValidTagInputs(staticStrings, dynamicValues)
+
+      return computeResultHelper(
+        options, staticStateFor(staticStrings), staticStrings, dynamicValues)
+    }
+  }
+
+  return usingOptions(/** @type {O} */ ({})) // eslint-disable-line no-inline-comments
 }
 
 /** The longest prefix of a that is also a prefix of b */

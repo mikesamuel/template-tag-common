@@ -18,8 +18,19 @@ This library makes it easier to write your own.
 See "[Tagged template literals][]" for details about how template tag
 functions are called.
 
+## Contents
 
-## Example
+*  [Example](#example)
+*  [API](#api)
+   *  [`calledAsTemplateTag`](#calledAsTemplateTag)
+   *  [`calledAsTemplateTagQuick`](#calledAsTemplateTagQuick)
+   *  [`memoizedTagFunction`](#memoizedTagFunction)
+      *  [Configuring tag handlers by passing an `options` object](#configuring)
+      *  [Life-cycle of a tag function](#lifecycle)
+   *   [`trimCommonWhitespaceFromLines`](#trimCommonWhitespaceFromLines)
+
+
+## Example <span id="example"></span>
 
 The example code below defines a CSV (Comma-separated value file)
 formatter that takes into account whether an interpolation happens
@@ -78,7 +89,7 @@ function computeCsvContexts (strings) {
 
 // Called with the contexts computed above, the static chunks of text,
 // then the dynamic values to compute the actual result.
-function interpolateValuesIntoCsv({ raw, contexts }, strings, values) {
+function interpolateValuesIntoCsv(options, { raw, contexts }, strings, values) {
   const len = values.length
   let result = ''
   for (let i = 0; i < len; ++i) {
@@ -120,9 +131,9 @@ module.exports = {
 ```
 
 
-## API
+## API  <span id="api"></span>
 
-### `calledAsTemplateTag(firstArgument, nArguments)`
+### `calledAsTemplateTag(firstArgument, nArguments)` <span id="calledAsTemplateTag"></span>
 
 If defining a function that may be used as a template tag
 or called normally, then pass the first argument and
@@ -154,12 +165,12 @@ the caller is not a template literal.  It is not likely that an
 attacker could cause an untrusted input to specify static strings; no
 `firstArgument` deserialized via `JSON.parse` will pass this function.
 
-### `calledAsTemplateTagQuick(firstArgument, nArguments)`
+### `calledAsTemplateTagQuick(firstArgument, nArguments)` <span id="calledAsTemplateTagQuick"></span>
 
 Like `calledAsTemplateTag` but doesn't check that the
 strings array contains only strings.
 
-### `memoizedTagFunction(computeStaticHelper, computeResultHelper)`
+### `memoizedTagFunction(computeStaticHelper, computeResultHelper)`  <span id="memoizedTagFunction"></span>
 
 Memoizes operations on the static portions so the per-use cost
 of a tagged template literal is related to the complexity of handling
@@ -170,8 +181,12 @@ the dynamic values.
    frozen static strings object, and cached weakly thereafter.
    Receives a string of arrays with a `.raw` property that is
    a string array of the same length.
-*  `computeResultHelper` : `{!function (T, !Array.<string>, !Array.<*>): R}`
-   a function that takes three parameters:
+*  `computeResultHelper` : `{!function (O, T, !Array.<string>, !Array.<*>): R}`
+   a function that takes four parameters:
+   1. An options object.  By default, an empty object.
+   2. The result of computeStaticHelper above.
+   3. The static chunks of text that surround the `${...}`
+   4. The dynamic values that result from evaluating the contents of `${...}`
 
 Returns `{!function (!Array.<string>, ...*): R}` a template tag
 function that calls `computeStaticHelper` as needed on the static
@@ -182,7 +197,63 @@ and dynamic value handling phases, we encourage granting privilege to
 the static portions which the developer specifies and treating with
 suspicion the dynamic values which may be controlled by an attacker.
 
-### `trimCommonWhitespaceFromLines(strings, options)`
+#### Configuring tag handlers by passing an `options` object <span id="configuring"></span>
+
+A `computeResultHelper`'s `options` parameter bundles optional
+configuration data together.
+
+Configurations can be passed to a tag as a single argument before the
+template literal:
+
+```js
+myTag(options)`Foo ${ bar } baz`
+```
+
+Configurations can be associated with a tag and then later used:
+
+```js
+const myConfiguredTag = myTag({ property: value })
+
+const tagResult = myConfiguredTag`foo ${ bar } baz`
+```
+
+Arrays cannot be valid `options` objects because of the way we
+distinguish a call to specify options from a use of the tag.
+
+#### Life-cycle of a tag function <span id="lifecycle"></span>
+
+Execution of
+
+```js
+const { memoizedTagFunction } = require('template-tag-common')
+
+const myTag = memoizedTagFunction(computeStaticHelper, computeResultHelper)
+
+const result = myTag(options)`string0 ${ value0 } string1 ${ value1 } string2\n`
+```
+
+is equivalent to
+
+```js
+// The JavaScript engine does this under the hood.
+// It is hoisted to the top of the module.
+const staticStrings = [ 'string0 ', ' string1 ', ' string2\n' ]
+staticStrings.raw =   [ 'string0 ', ' string1 ', ' string2\\n' ]
+Object.freeze(staticStrings.raw)
+Object.freeze(staticString)
+
+// This is the part that memoizedTagFunction does.
+const result = computeResultHelper(
+    options,
+    computeStaticHelper(staticStrings),
+    staticStrings,
+    [ value0, value1 ])
+```
+
+but if this happened in a loop, the call to `computeStaticHelper` would
+probably only happen once.
+
+### `trimCommonWhitespaceFromLines(strings, options)`  <span id="trimCommonWhitespaceFromLines"></span>
 
 Simplifies tripping common leading whitespace from a multiline
 template tag so that a template tag can be re-indented as a block.

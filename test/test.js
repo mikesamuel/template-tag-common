@@ -150,7 +150,7 @@ describe('template-tag-common', () => {
     it('simple tag usage', () => {
       const myTag = memoizedTagFunction(
         (strings) => strings.length,
-        (computed, statics, dynamics) =>
+        (options, computed, statics, dynamics) =>
           [ computed, JSON.stringify(statics), JSON.stringify(dynamics) ])
       for (let i = 0; i < 10; ++i) {
         expect(myTag`foo${i}bar`).to.deep.equal(
@@ -160,7 +160,7 @@ describe('template-tag-common', () => {
     it('mutation of chunks array', () => {
       const myTag = memoizedTagFunction(
         (strings) => strings.length,
-        (computed, statics, dynamics) =>
+        (options, computed, statics, dynamics) =>
           [ computed, JSON.stringify(statics), JSON.stringify(dynamics) ])
       const strings = [ 'foo', 'bar' ]
       strings.raw = [ 'foo', 'bar' ]
@@ -183,7 +183,7 @@ describe('template-tag-common', () => {
           ++callCount
           return strings.length
         },
-        (computed, statics, dynamics) =>
+        (options, computed, statics, dynamics) =>
           [ computed, JSON.stringify(statics), JSON.stringify(dynamics) ])
 
       for (let i = 0; i < 10; ++i) {
@@ -192,6 +192,35 @@ describe('template-tag-common', () => {
       }
 
       expect(callCount).to.equal(1)
+    })
+    it('configurations routed', () => {
+      const myTag = memoizedTagFunction(
+        (strings) => ({ nStrings: strings.length }),
+        (options, computed, statics, dynamics) => ({ options, computed, dynamics }))
+
+      const results = []
+      for (let i = 0; i < 3; ++i) {
+        // Here we configure a tag dynamically.
+        results.push(myTag({ i })`foo:${i};`)
+      }
+      expect(results).to.deep.equal(
+        [
+          {
+            options: { i: 0 },
+            computed: { nStrings: 2 },
+            dynamics: [ 0 ]
+          },
+          {
+            options: { i: 1 },
+            computed: { nStrings: 2 },
+            dynamics: [ 1 ]
+          },
+          {
+            options: { i: 2 },
+            computed: { nStrings: 2 },
+            dynamics: [ 2 ]
+          }
+        ])
     })
   })
 
@@ -313,7 +342,7 @@ describe('template-tag-common', () => {
 
       // Called with the result above, then the static chunks of text, then the
       // dynamic values to compute the actual result.
-      function interpolateValuesIntoCsv ({ raw, contexts }, strings, values) {
+      function interpolateValuesIntoCsv (options, { raw, contexts }, strings, values) {
         const len = values.length
         let result = ''
         for (let i = 0; i < len; ++i) {
