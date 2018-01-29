@@ -27,7 +27,8 @@ functions are called.
    *  [`memoizedTagFunction`](#memoizedTagFunction)
       *  [Configuring tag handlers by passing an `options` object](#configuring)
       *  [Life-cycle of a tag function](#lifecycle)
-   *   [`trimCommonWhitespaceFromLines`](#trimCommonWhitespaceFromLines)
+   *  [`trimCommonWhitespaceFromLines`](#trimCommonWhitespaceFromLines)
+   *  [`TypedString`](#TypedString)
 
 
 ## Example <span id="example"></span>
@@ -53,6 +54,9 @@ const {
  * fragments may span multiple cells.
  */
 class CsvFragment extends TypedString {
+ static get contentTypeDescription () {
+   return 'One or more CSV cells and/or row terminators'
+ }
 }
 
 /**
@@ -96,7 +100,7 @@ function interpolateValuesIntoCsv(options, { raw, contexts }, strings, values) {
     const alreadyQuoted = contexts[i]
     const value = values[i]
     let escaped = null
-    if (value instanceof CsvFragment) {
+    if (CsvFragment.isTypeOf(value)) {
       // Allow a CSV fragment to specify multiple cells
       escaped = alreadyQuoted
         ? `"${value.content}"`
@@ -302,6 +306,59 @@ The `options` parameter is optional as are all its properties.  Options include
 | -------------------- | ------- | ------- |
 | `trimEolAtStart`     | trim starting line terminator from first chunk | `false` |
 | `trimEolAtEnd`     | trim ending line terminator from last chunk | `false` |
+
+### `TypedString`  <span id="TypedString"></span>
+
+A `TypedString` is an object that represents a string that matches a known
+contract.  Each `subclass` of `TypedString` encapsulates such a contract.
+
+Create a subclass of `TypedString` when you want to treat some kinds of
+strings specially.
+
+This can make it very easy to write *composable* tag handlers -- tag
+handlers that can easily be split up or refactored into multiple steps.
+
+The [CSV example](#example) does not re-escape `CSVFragment`s.
+
+```js
+class CSVFragment extends TypedString {
+ static get contentTypeDescription () {
+   return 'One or more CSV cells and/or row terminators'
+ }
+}
+```
+
+Note that each concrete sub-class of `TypedString` **must** have
+a static property `contentTypeDescription`.  This allows us to
+avoid `instanceof` checks which can break when multiple compiled
+libraries inline their dependencies.
+
+Later that example checks whether a value has a particular content
+type before re-escaping
+
+```ks
+  if (CSVFragment.isTypeOf(value))
+```
+
+The output of <code>csv&#96;...&#96;</code> is also a `CSVFragment`
+
+```js
+  return new CsvFragment(result)
+```
+
+which makes it easy to compose multiple uses of <code>csv&#96;...&#96;</code>
+or split and refactor a single use.
+
+```js
+const row0 = csv`...`
+const row1 = csv`...`
+
+// Combine two rows into one
+csv`
+${row0}
+${row1}
+`
+```
 
 
 [Tagged template literals]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#Tagged_template_literals

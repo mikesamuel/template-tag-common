@@ -196,7 +196,8 @@ describe('template-tag-common', () => {
     it('configurations routed', () => {
       const myTag = memoizedTagFunction(
         (strings) => ({ nStrings: strings.length }),
-        (options, computed, statics, dynamics) => ({ options, computed, dynamics }))
+        (options, computed, statics, dynamics) =>
+          ({ options, computed, dynamics }))
 
       const results = []
       for (let i = 0; i < 3; ++i) {
@@ -305,6 +306,9 @@ describe('template-tag-common', () => {
        * fragments may span multiple cells.
        */
       class CsvFragment extends TypedString {
+        static get contentTypeDescription () {
+          return 'One or more CSV cells and/or row terminators'
+        }
       }
 
       /**
@@ -349,7 +353,7 @@ describe('template-tag-common', () => {
           const alreadyQuoted = contexts[i]
           const value = values[i]
           let escaped = null
-          if (value instanceof CsvFragment) {
+          if (CsvFragment.isTypeOf(value)) {
             // Allow a CSV fragment to specify multiple cells
             escaped = alreadyQuoted
               ? `"${value.content}"`

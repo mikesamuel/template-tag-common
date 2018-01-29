@@ -159,7 +159,8 @@ function memoizedTagFunction (computeStaticHelper, computeResultHelper) {
     return (staticStringsOrOptions, ...dynamicValues) => {
       // If we've only been passed an options object,
       // return a template tag that uses it.
-      if (dynamicValues.length === 0 && !Array.isArray(staticStringsOrOptions)) {
+      if (dynamicValues.length === 0 &&
+          !Array.isArray(staticStringsOrOptions)) {
         return usingOptions(staticStringsOrOptions)
       }
 
@@ -171,7 +172,8 @@ function memoizedTagFunction (computeStaticHelper, computeResultHelper) {
     }
   }
 
-  return usingOptions(/** @type {O} */ ({})) // eslint-disable-line no-inline-comments
+  // eslint-disable-next-line no-inline-comments
+  return usingOptions(/** @type {O} */ ({}))
 }
 
 /** The longest prefix of a that is also a prefix of b */
@@ -341,6 +343,11 @@ function cook (trv) {
  *
  * Template tags may `extend` this type to define wrapped strings
  * with relevant contracts.
+ *
+ * Concrete subclasses must define a static typeDescriptor property
+ * so that the .is method can determine type equivalence without
+ * relying on `instanceof` which breaks when libraries are shipped
+ * as standalone packed bundles.
  */
 class TypedString {
   constructor (content) {
@@ -350,6 +357,19 @@ class TypedString {
   }
   toString () {
     return this.content
+  }
+
+  /**
+   * Preferable to `instanceof`.  See class comment.
+   */
+  static isTypeOf (x) {
+    if (x) {
+      const ctd = this.contentTypeDescription
+      if (typeof ctd === 'string') {
+        return ctd === x.constructor.contentTypeDescription
+      }
+    }
+    return false
   }
 }
 
