@@ -48,6 +48,7 @@ const {
   trimCommonWhitespaceFromLines,
   TypedString
 } = require('template-tag-common')
+const { Mintable } = require('node-sec-patterns')
 
 /**
  * A fragment of CSV.
@@ -58,8 +59,7 @@ class CsvFragment extends TypedString {}
 Object.defineProperty(
   CsvFragment, 'contractKey', { value: 'CsvFragment' })
 const isCsvFragment = Mintable.verifierFor(CsvFragment)
-const mintCsvFragment = Mintable.minterFor(
-  CsvFragment, (x) => String(x))
+const mintCsvFragment = Mintable.minterFor(CsvFragment, (x) => String(x))
 
 /**
  * A template tag function that composes a CSV fragment
@@ -323,29 +323,32 @@ handlers that can easily be split up or refactored into multiple steps.
 The [CSV example](#example) does not re-escape `CSVFragment`s.
 
 ```js
-class CSVFragment extends TypedString {
- static get contentTypeDescription () {
-   return 'One or more CSV cells and/or row terminators'
- }
-}
+class CSVFragment extends TypedString {}
+Object.defineProperty(
+  CSVFragment, 'contractKey', { value: 'CSVFragment' })
 ```
 
 Note that each concrete sub-class of `TypedString` **must** have
-a static property `contentTypeDescription`.  This allows us to
-avoid `instanceof` checks which can break when multiple compiled
-libraries inline their dependencies.
+a static property `contractKey`.  This allows using a minter and
+verifier instead of error-prone `instanceof` checks.  That
+module fetches them thus
+
+```js
+const isCsvFragment = Mintable.verifierFor(CsvFragment)
+const mintCsvFragment = Mintable.minterFor(CsvFragment, (x) => String(x))
+```
 
 Later that example checks whether a value has a particular content
 type before re-escaping
 
-```ks
-  if (CSVFragment.isTypeOf(value))
+```js
+  if (isCsvFragment(value))
 ```
 
 The output of <code>csv&#96;...&#96;</code> is also a `CSVFragment`
 
 ```js
-  return new CsvFragment(result)
+  return mintCsvFragment(result)
 ```
 
 which makes it easy to compose multiple uses of <code>csv&#96;...&#96;</code>
