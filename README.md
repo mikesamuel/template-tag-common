@@ -53,11 +53,12 @@ const {
  * Unlike simple strings, numbers, or Dates,
  * fragments may span multiple cells.
  */
-class CsvFragment extends TypedString {
- static get contentTypeDescription () {
-   return 'One or more CSV cells and/or row terminators'
- }
-}
+class CsvFragment extends TypedString {}
+Object.defineProperty(
+  CsvFragment, 'contractKey', { value: 'CsvFragment' })
+const isCsvFragment = Mintable.verifierFor(CsvFragment)
+const mintCsvFragment = Mintable.minterFor(
+  CsvFragment, (x) => String(x))
 
 /**
  * A template tag function that composes a CSV fragment
@@ -100,7 +101,7 @@ function interpolateValuesIntoCsv(options, { raw, contexts }, strings, values) {
     const alreadyQuoted = contexts[i]
     const value = values[i]
     let escaped = null
-    if (CsvFragment.isTypeOf(value)) {
+    if (isCsvFragment(value)) {
       // Allow a CSV fragment to specify multiple cells
       escaped = alreadyQuoted
         ? `"${value.content}"`
@@ -116,13 +117,13 @@ function interpolateValuesIntoCsv(options, { raw, contexts }, strings, values) {
     result += escaped
   }
   result += raw[len]
-  return new CsvFragment(result)
+  return mintCsvFragment(result)
 }
 
 console.log(
   '%s',
   csv`
-    foo,${ 1 },${ new CsvFragment('bar,bar') }
+    foo,${ 1 },${ mintCsvFragment('bar,bar') }
     ${ 'ab"c' },baz,"boo${ '\n' }",far`)
 // Logs something like
 // foo,1,bar,bar

@@ -26,6 +26,7 @@ const {
   trimCommonWhitespaceFromLines,
   TypedString
 } = require('../index')
+const { Mintable } = require('node-sec-patterns')
 
 describe('template-tag-common', () => {
   describe('calledAsTemplateTag', () => {
@@ -156,6 +157,63 @@ describe('template-tag-common', () => {
         expect(myTag`foo${i}bar`).to.deep.equal(
           [ 2, '["foo","bar"]', JSON.stringify([ i ]) ])
       }
+    })
+    describe('invalid arguments', () => {
+      const myTag = memoizedTagFunction(
+        (strings) => strings.length,
+        (options, computed, statics, dynamics) =>
+          [ computed, JSON.stringify(statics), JSON.stringify(dynamics) ])
+      it('empty array', () => {
+        expect(() => myTag([])).throws()
+      })
+      it('string array no raw', () => {
+        expect(() => myTag([ 'foo' ])).throws()
+      })
+      it('bad value in raw', () => {
+        const baked = [ 'foo' ]
+        baked.raw = [ 123 ]
+        expect(() => myTag(baked)).throws()
+      })
+      it('bad value in baked', () => {
+        const baked = [ 123 ]
+        baked.raw = [ '123' ]
+        expect(() => myTag(baked)).throws()
+      })
+      it('too few args', () => {
+        const baked = [ '123', '456' ]
+        baked.raw = [ '123', '456' ]
+        expect(() => myTag(baked)).throws()
+      })
+      it('too many args', () => {
+        const baked = [ '123', '456' ]
+        baked.raw = [ '123', '456' ]
+        expect(() => myTag(baked, 1, 2, 3)).throws()
+      })
+    })
+    it('failure computing static state', () => {
+      let dynamicValueHelperReached = false
+      let staticHelperInvocationCount = 0
+      const myTag = memoizedTagFunction(
+        (strings) => {
+          ++staticHelperInvocationCount
+          throw new Error(strings[0])
+        },
+        (options, computed, statics, dynamics) => {
+          dynamicValueHelperReached = true
+        })
+      function fails () {
+        return myTag`Panic`
+      }
+
+      // Try it once to prime the cache
+      expect(fails).to.throw()
+      // It should throw the second and subsequent time
+      expect(fails).to.throw()
+
+      expect(() => myTag``).to.throw()
+
+      expect(dynamicValueHelperReached).to.equal(false)
+      expect(staticHelperInvocationCount).to.equal(2)
     })
     it('mutation of chunks array', () => {
       const myTag = memoizedTagFunction(
@@ -293,6 +351,126 @@ describe('template-tag-common', () => {
         raw: [ '\nfoo\\\nbar' ]
       })
     })
+    it('redundant escape', () => {
+      expect(trimmed`
+      foo\/bar
+      baz`).to.deep.equal({
+        cooked: [ '\nfoo/bar\nbaz' ],
+        raw: [ '\nfoo\\/bar\nbaz' ]
+      })
+    })
+    it('minimum in subsequent line', () => {
+      const world = 'Earth'
+      expect(trimmed`
+        >
+      Hello, ${world}!
+        <`)
+        .to.deep.equal({
+          cooked: [ '\n  >\nHello, ', '!\n  <' ],
+          raw: [ '\n  >\nHello, ', '!\n  <' ]
+        })
+    })
+    it('mix of spaces and tabs', () => {
+      const world = 'Earth'
+
+      const strings = [ '\n\t>\n Hello, ', '!\n\t<' ]
+      strings.raw = Object.freeze(strings.slice())
+      Object.freeze(strings)
+
+      expect(trimmed(strings, world))
+        .to.deep.equal({
+          cooked: [ '\n\t>\n Hello, ', '!\n\t<' ],
+          raw: [ '\n\t>\n Hello, ', '!\n\t<' ]
+        })
+    })
+    it('late line not indented', () => {
+      expect(trimmed`
+        foo
+        bar
+baz`)
+        .to.deep.equal({
+          cooked: [ '\n        foo\n        bar\nbaz' ],
+          raw: [ '\n        foo\n        bar\nbaz' ]
+        })
+    })
+    describe('eol flags', () => {
+      function trimmer (options) {
+        return (strings, ...vals) => {
+          const trimmedStrings = trimCommonWhitespaceFromLines(strings, options)
+          return {
+            cooked: trimmedStrings.slice(),
+            raw: trimmedStrings.raw
+          }
+        }
+      }
+      it('at start', () => {
+        expect(
+          trimmer({ trimEolAtStart: true })`
+          bar
+          `)
+          .to.deep.equal({
+            cooked: [ 'bar\n' ],
+            raw: [ 'bar\n' ]
+          })
+      })
+      it('at end', () => {
+        expect(
+          trimmer({ trimEolAtEnd: true })`
+          bar
+          `)
+          .to.deep.equal({
+            cooked: [ '\nbar' ],
+            raw: [ '\nbar' ]
+          })
+      })
+      it('at both', () => {
+        expect(
+          trimmer({ trimEolAtStart: true, trimEolAtEnd: true })`
+          bar
+          `)
+          .to.deep.equal({
+            cooked: [ 'bar' ],
+            raw: [ 'bar' ]
+          })
+      })
+      it('without dedenting', () => {
+        expect(
+          trimmer({ trimEolAtStart: true, trimEolAtEnd: true })`
+bar
+`)
+          .to.deep.equal({
+            cooked: [ 'bar' ],
+            raw: [ 'bar' ]
+          })
+      })
+    })
+  })
+
+  describe('TypedString', () => {
+    class MyTypedString extends TypedString {}
+    Object.defineProperty(
+      MyTypedString, 'contractKey', { value: 'MyTypedString' })
+    const verifier = Mintable.verifierFor(MyTypedString)
+
+    it('mints', () => {
+      const instance = Mintable.minterFor(MyTypedString)('foo')
+      expect(instance.content).to.equal('foo')
+      expect(String(instance)).to.equal('foo')
+      expect(verifier(instance)).to.equal(true)
+    })
+    it('read-only', () => {
+      const instance = Mintable.minterFor(MyTypedString)('foo')
+      expect(
+        function mutate () { // eslint-disable-line prefer-arrow-callback
+          // ESLint is just wrong about strict being unnecessary in a module context
+          // eslint-disable-next-line strict
+          'use strict'
+
+          instance.content = 'bar'
+        })
+        .throws()
+      expect(instance.content).to.equal('foo')
+    })
   })
 
   describe('example code from README', () => {
@@ -305,11 +483,15 @@ describe('template-tag-common', () => {
        * Unlike simple strings, numbers, or Dates,
        * fragments may span multiple cells.
        */
-      class CsvFragment extends TypedString {
-        static get contentTypeDescription () {
-          return 'One or more CSV cells and/or row terminators'
-        }
-      }
+      class CsvFragment extends TypedString {}
+
+      Object.defineProperty(
+        CsvFragment,
+        'contractKey',
+        { value: 'CsvFragment' })
+
+      const isCsvFragment = Mintable.verifierFor(CsvFragment)
+      const mintCsvFragment = Mintable.minterFor(CsvFragment)
 
       /**
        * A template tag function that composes a CSV fragment
@@ -353,7 +535,7 @@ describe('template-tag-common', () => {
           const alreadyQuoted = contexts[i]
           const value = values[i]
           let escaped = null
-          if (CsvFragment.isTypeOf(value)) {
+          if (isCsvFragment(value)) {
             // Allow a CSV fragment to specify multiple cells
             escaped = alreadyQuoted
               ? `"${value.content}"`
@@ -369,14 +551,15 @@ describe('template-tag-common', () => {
           result += escaped
         }
         result += raw[len]
-        return result
+        return mintCsvFragment(result)
       }
 
       expect(
         csv`
-          foo,${1},${new CsvFragment('bar,bar')}
+          foo,${1},${mintCsvFragment('bar,bar')}
           ${'ab"c'},baz,"boo${'\n'}",far
-          `)
+          `
+          .toString())
         .to.equal(
           'foo,"1",bar,bar\n' +
           '"ab\\"c",baz,"boo\\n",far')

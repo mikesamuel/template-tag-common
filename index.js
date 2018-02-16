@@ -21,6 +21,7 @@
  */
 
 const { LruCache } = require('an-lru-cache')
+const { Mintable } = require('node-sec-patterns')
 const { every } = Array.prototype
 
 function isString (val) {
@@ -339,43 +340,28 @@ function cook (trv) {
 }
 
 /**
- * Wraps a content string so that `instanceof` checks can be used
- * to test whether the string meets a specific contract.
+ * Wraps a content string so that runtime type checks can be used
+ * to test whether a content string is appropriate to use in a
+ * particular context.
  *
  * Template tags may `extend` this type to define wrapped strings
  * with relevant contracts.
  *
- * Concrete subclasses must define a static typeDescriptor property
- * so that the .is method can determine type equivalence without
- * relying on `instanceof` which breaks when libraries are shipped
- * as standalone packed bundles.
+ * Concrete subclasses must define a static contractKey property
+ * so that `Mintable.verifierFor`can determine type equivalence
+ * without relying on `instanceof`.
  */
-class TypedString {
+class TypedString extends Mintable {
   constructor (content) {
-    Object.defineProperties(
+    super()
+    Object.defineProperty(
       this,
-      {
-        'content':
-        { configurable: false, writable: false, value: String(content) },
-        'constructor':
-        { configurable: false, writable: false, value: this.constructor }
-      })
-  }
-  toString () {
-    return this.content
+      'content',
+      { value: String(content) })
   }
 
-  /**
-   * Preferable to `instanceof`.  See class comment.
-   */
-  static isTypeOf (x) {
-    if (x) {
-      const ctd = this.contentTypeDescription
-      if (typeof ctd === 'string') {
-        return ctd === x.constructor.contentTypeDescription
-      }
-    }
-    return false
+  toString () {
+    return this.content
   }
 }
 
