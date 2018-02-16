@@ -12,9 +12,11 @@
   "files": [
     "index.js"
   ],
-  "dependencies": {},
   "scripts": {
-    "test": "./node_modules/.bin/standard && ./node_modules/.bin/eslint . && ./node_modules/.bin/mocha"
+    "cover": "istanbul cover _mocha",
+    "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls",
+    "lint": "./node_modules/.bin/standard && ./node_modules/.bin/eslint .",
+    "test": "mocha"
   },
   "author": "@mikesamuel",
   "license": "Apache-2.0",
@@ -25,12 +27,18 @@
   "bugs": {
     "url": "https://github.com/mikesamuel/template-tag-common/issues"
   },
+  "dependencies": {
+    "an-lru-cache": ">=1.0.4"
+  },
   "devDependencies": {
     "chai": ">=4.1.2",
+    "coveralls": "^3.0.0",
     "eslint": ">=4.15.0",
-    "eslint-config-strict": "*",
     "eslint-config-standard": "*",
+    "eslint-config-strict": "*",
+    "istanbul": "^0.4.5",
     "mocha": ">=4.0.1",
+    "mocha-lcov-reporter": "^1.3.0",
     "standard": "*"
   },
   "eslintConfig": {

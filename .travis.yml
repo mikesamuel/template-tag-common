@@ -1,9 +1,13 @@
 language: node_js
 node_js:
   - "6"
+  - "7"
   - "8"
+  - "9"
+  - "stable"
 
 # Use faster Docker architecture on Travis.
 sudo: false
 
-script:        npm test
+script:        npm run-script lint && npm test
+after_success: npm run coveralls

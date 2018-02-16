@@ -20,6 +20,7 @@
  * Provides utilities to simplify creating template tag handlers.
  */
 
+const { LruCache } = require('an-lru-cache')
 const { every } = Array.prototype
 
 function isString (val) {
@@ -123,7 +124,7 @@ let configurableTemplateTag  // eslint-disable-line
  *    computeResultHelper.
  */
 function memoizedTagFunction (computeStaticHelper, computeResultHelper) {
-  const memoTable = new WeakMap()
+  const memoTable = new LruCache()
 
   /**
    * @param {!Array.<string>} staticStrings
@@ -351,9 +352,14 @@ function cook (trv) {
  */
 class TypedString {
   constructor (content) {
-    Object.defineProperty(
-      this, 'content',
-      { configurable: false, writable: false, value: String(content) })
+    Object.defineProperties(
+      this,
+      {
+        'content':
+        { configurable: false, writable: false, value: String(content) },
+        'constructor':
+        { configurable: false, writable: false, value: this.constructor }
+      })
   }
   toString () {
     return this.content
