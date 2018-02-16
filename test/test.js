@@ -491,7 +491,7 @@ bar
         { value: 'CsvFragment' })
 
       const isCsvFragment = Mintable.verifierFor(CsvFragment)
-      const mintCsvFragment = Mintable.minterFor(CsvFragment)
+      const mintCsvFragment = Mintable.minterFor(CsvFragment, (x) => String(x))
 
       /**
        * A template tag function that composes a CSV fragment
