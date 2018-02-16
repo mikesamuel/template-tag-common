@@ -5,6 +5,7 @@
 [![Build Status](https://travis-ci.org/mikesamuel/template-tag-common.svg?branch=master)](https://travis-ci.org/mikesamuel/template-tag-common)
 [![Dependencies Status](https://david-dm.org/mikesamuel/template-tag-common/status.svg)](https://david-dm.org/mikesamuel/template-tag-common)
 [![npm](https://img.shields.io/npm/v/template-tag-common.svg)](https://www.npmjs.com/package/template-tag-common)
+[![Coverage Status](https://coveralls.io/repos/github/mikesamuel/template-tag-common/badge.svg?branch=master)](https://coveralls.io/github/mikesamuel/template-tag-common?branch=master)
 
 Simplifies authoring JS string template tags.  Tagged string templates
 allow embedding a mini-language with JavaScript, and the example below
