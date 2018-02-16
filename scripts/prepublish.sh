@@ -29,8 +29,8 @@ pushd "$TMP_WORKSPACE"
   tar xfz "$TARBALL" && (
     pushd "$TMP_WORKSPACE"/package
       npm install \
-      && npm run cover \
-      && npm run lint
+      && npm run lint \
+      && npm run cover
     popd >& /dev/null
   )
 popd >& /dev/null
