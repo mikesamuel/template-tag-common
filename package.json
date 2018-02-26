@@ -28,8 +28,8 @@
     "url": "https://github.com/mikesamuel/template-tag-common/issues"
   },
   "dependencies": {
-    "an-lru-cache": "^1.0.4",
-    "node-sec-patterns": "^1.0.3"
+    "an-lru-cache": "1.0.4",
+    "node-sec-patterns": "1.0.3"
   },
   "devDependencies": {
     "chai": "^4.1.2",
