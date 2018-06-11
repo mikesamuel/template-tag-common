@@ -29,12 +29,13 @@
   },
   "dependencies": {
     "an-lru-cache": "1.0.4",
-    "node-sec-patterns": "1.0.3"
+    "module-keys": "1.0.4",
+    "node-sec-patterns": "2.0.0"
   },
   "devDependencies": {
     "chai": "^4.1.2",
-    "coveralls": "^3.0.0",
-    "eslint": "^4.15.0",
+    "coveralls": "^3.0.1",
+    "eslint": "^4.19.1",
     "eslint-config-standard": "*",
     "eslint-config-strict": "*",
     "istanbul": "^0.4.5",
