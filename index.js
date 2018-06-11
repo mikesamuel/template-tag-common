@@ -215,7 +215,8 @@ function commonPrefixOfTemplateStrings ({ raw, length }) {
 
 // Matches zero or more Whitespace at the start of input
 // https://www.ecma-international.org/ecma-262/6.0/#sec-white-space
-const WS_RUN = /^[\t\u000B\u000C \u00A0\uFeFF]*/
+// eslint-disable-next-line no-control-regex
+const WS_RUN = /^[\t\u000B\u000C \u00A0\uFEFF]*/
 // https://www.ecma-international.org/ecma-262/6.0/#sec-line-terminators
 const LINE_TERMINATORS = /[\n\r\u2028\u2029]+/
 const LINE_TERMINATOR_AT_START = /^(?:\r\n?|[\n\u2028\u2029])/
