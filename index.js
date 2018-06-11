@@ -363,6 +363,10 @@ class TypedString extends Mintable {
   toString () {
     return this.content
   }
+
+  valueOf () {
+    return this.content
+  }
 }
 
 module.exports = Object.freeze({

@@ -17,6 +17,9 @@
 
 /* eslint "no-magic-numbers": off, "no-warning-comments": off */
 
+// Module keys polyfill
+require('module-keys/cjs').polyfill(module, require, 'node_modules/template-tag-common/test/test.js')
+
 const { expect } = require('chai')
 const { describe, it } = require('mocha')
 const {
@@ -453,13 +456,18 @@ bar
     const verifier = Mintable.verifierFor(MyTypedString)
 
     it('mints', () => {
-      const instance = Mintable.minterFor(MyTypedString)('foo')
+      const instance = require.keys.unboxStrict(
+        Mintable.minterFor(MyTypedString))(
+        'foo')
+
       expect(instance.content).to.equal('foo')
       expect(String(instance)).to.equal('foo')
       expect(verifier(instance)).to.equal(true)
     })
     it('read-only', () => {
-      const instance = Mintable.minterFor(MyTypedString)('foo')
+      const instance = require.keys.unboxStrict(
+        Mintable.minterFor(MyTypedString))(
+        'foo')
       expect(
         function mutate () { // eslint-disable-line prefer-arrow-callback
           // ESLint is just wrong about strict being unnecessary in a module context
@@ -491,7 +499,10 @@ bar
         { value: 'CsvFragment' })
 
       const isCsvFragment = Mintable.verifierFor(CsvFragment)
-      const mintCsvFragment = Mintable.minterFor(CsvFragment, (x) => String(x))
+      // Assumes module-keys/babel plugin
+      const mintCsvFragment = require.keys.unbox(
+        Mintable.minterFor(CsvFragment), null,
+        (x) => String(x))
 
       /**
        * A template tag function that composes a CSV fragment

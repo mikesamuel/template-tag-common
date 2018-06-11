@@ -6,6 +6,7 @@
 [![Dependencies Status](https://david-dm.org/mikesamuel/template-tag-common/status.svg)](https://david-dm.org/mikesamuel/template-tag-common)
 [![npm](https://img.shields.io/npm/v/template-tag-common.svg)](https://www.npmjs.com/package/template-tag-common)
 [![Coverage Status](https://coveralls.io/repos/github/mikesamuel/template-tag-common/badge.svg?branch=master)](https://coveralls.io/github/mikesamuel/template-tag-common?branch=master)
+[![Known Vulnerabilities](https://snyk.io/test/github/mikesamuel/template-tag-common/badge.svg?targetFile=package.json)](https://snyk.io/test/github/mikesamuel/template-tag-common?targetFile=package.json)
 
 Simplifies authoring JS string template tags.  Tagged string templates
 allow embedding a mini-language with JavaScript, and the example below
@@ -59,7 +60,10 @@ class CsvFragment extends TypedString {}
 Object.defineProperty(
   CsvFragment, 'contractKey', { value: 'CsvFragment' })
 const isCsvFragment = Mintable.verifierFor(CsvFragment)
-const mintCsvFragment = Mintable.minterFor(CsvFragment, (x) => String(x))
+// Assumes module-keys/babel plugin
+const mintCsvFragment = require.keys.unbox(
+    Mintable.minterFor(CsvFragment), null,
+    (x) => String(x))
 
 /**
  * A template tag function that composes a CSV fragment
@@ -335,8 +339,14 @@ module fetches them thus
 
 ```js
 const isCsvFragment = Mintable.verifierFor(CsvFragment)
-const mintCsvFragment = Mintable.minterFor(CsvFragment, (x) => String(x))
+const mintCsvFragment = require.keys.unbox(
+    Mintable.minterFor(CsvFragment), null,
+    (x) => String(x))
 ```
+
+`Mintable.minterFor` returns a [box][] that is openable when
+there's a grant for the current module.  The `(x) => String(x))`
+allows it to degrade gracefully to returning a simple string.
 
 Later that example checks whether a value has a particular content
 type before re-escaping
@@ -368,3 +378,4 @@ ${row1}
 
 [Tagged template literals]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#Tagged_template_literals
 [GetTemplateObject]: https://www.ecma-international.org/ecma-262/6.0/#sec-gettemplateobject
+[box]: https://www.npmjs.com/package/module-keys#class-box
