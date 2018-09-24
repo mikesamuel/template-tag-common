@@ -33,7 +33,7 @@ functions are called.
    *  [`TypedString`](#TypedString)
 
 
-## Example <span id="example"></span>
+## Example <a name="example"></a>
 
 The example code below defines a CSV (Comma-separated value file)
 formatter that takes into account whether an interpolation happens
@@ -141,9 +141,9 @@ module.exports = {
 ```
 
 
-## API  <span id="api"></span>
+## API  <a name="api"></a>
 
-### `calledAsTemplateTag(firstArgument, nArguments)` <span id="calledAsTemplateTag"></span>
+### `calledAsTemplateTag(firstArgument, nArguments)` <a name="calledAsTemplateTag"></a>
 
 If defining a function that may be used as a template tag
 or called normally, then pass the first argument and
@@ -175,12 +175,12 @@ the caller is not a template literal.  It is not likely that an
 attacker could cause an untrusted input to specify static strings; no
 `firstArgument` deserialized via `JSON.parse` will pass this function.
 
-### `calledAsTemplateTagQuick(firstArgument, nArguments)` <span id="calledAsTemplateTagQuick"></span>
+### `calledAsTemplateTagQuick(firstArgument, nArguments)` <a name="calledAsTemplateTagQuick"></a>
 
 Like `calledAsTemplateTag` but doesn't check that the
 strings array contains only strings.
 
-### `memoizedTagFunction(computeStaticHelper, computeResultHelper)`  <span id="memoizedTagFunction"></span>
+### `memoizedTagFunction(computeStaticHelper, computeResultHelper)`  <a name="memoizedTagFunction"></a>
 
 Memoizes operations on the static portions so the per-use cost
 of a tagged template literal is related to the complexity of handling
@@ -207,7 +207,7 @@ and dynamic value handling phases, we encourage granting privilege to
 the static portions which the developer specifies and treating with
 suspicion the dynamic values which may be controlled by an attacker.
 
-#### Configuring tag handlers by passing an `options` object <span id="configuring"></span>
+#### Configuring tag handlers by passing an `options` object <a name="configuring"></a>
 
 A `computeResultHelper`'s `options` parameter bundles optional
 configuration data together.
@@ -230,7 +230,7 @@ const tagResult = myConfiguredTag`foo ${ bar } baz`
 Arrays cannot be valid `options` objects because of the way we
 distinguish a call to specify options from a use of the tag.
 
-#### Life-cycle of a tag function <span id="lifecycle"></span>
+#### Life-cycle of a tag function <a name="lifecycle"></a>
 
 Execution of
 
@@ -263,7 +263,7 @@ const result = computeResultHelper(
 but if this happened in a loop, the call to `computeStaticHelper` would
 probably only happen once.
 
-### `trimCommonWhitespaceFromLines(strings, options)`  <span id="trimCommonWhitespaceFromLines"></span>
+### `trimCommonWhitespaceFromLines(strings, options)`  <a name="trimCommonWhitespaceFromLines"></a>
 
 Simplifies tripping common leading whitespace from a multiline
 template tag so that a template tag can be re-indented as a block.
@@ -313,7 +313,7 @@ The `options` parameter is optional as are all its properties.  Options include
 | `trimEolAtStart`     | trim starting line terminator from first chunk | `false` |
 | `trimEolAtEnd`     | trim ending line terminator from last chunk | `false` |
 
-### `TypedString`  <span id="TypedString"></span>
+### `TypedString`  <a name="TypedString"></a>
 
 A `TypedString` is an object that represents a string that matches a known
 contract.  Each `subclass` of `TypedString` encapsulates such a contract.
