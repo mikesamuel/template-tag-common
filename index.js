@@ -109,7 +109,7 @@ let configurableTemplateTag  // eslint-disable-line
  * @template O
  * @template R
  * @template T
- * @param {!function (Array.<string>): T} computeStaticHelper
+ * @param {!function (!Array.<string>): T} computeStaticHelper
  *   called when there is no entry for the
  *   frozen static strings object, and cached weakly thereafter.
  *   Receives a string of arrays with a {@code .raw} property that is
