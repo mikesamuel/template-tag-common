@@ -32,9 +32,9 @@
     "url": "https://github.com/mikesamuel/template-tag-common/issues"
   },
   "dependencies": {
-    "an-lru-cache": "^1.0.4",
-    "module-keys": "^1.0.7",
-    "node-sec-patterns": "^2.0.4"
+    "an-lru-cache": "^1.0.5",
+    "module-keys": "^1.0.9",
+    "node-sec-patterns": "^2.0.6"
   },
   "devDependencies": {
     "babel": "^6.23.0",
