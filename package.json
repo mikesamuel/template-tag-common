@@ -34,7 +34,7 @@
   "dependencies": {
     "an-lru-cache": "^1.0.5",
     "module-keys": "^1.0.10",
-    "node-sec-patterns": "^2.0.8"
+    "node-sec-patterns": "^2.0.9"
   },
   "devDependencies": {
     "babel": "^6.23.0",
