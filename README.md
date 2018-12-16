@@ -61,7 +61,7 @@ Object.defineProperty(
   CsvFragment, 'contractKey', { value: 'CsvFragment' })
 const isCsvFragment = Mintable.verifierFor(CsvFragment)
 // Assumes module-keys/babel plugin
-const mintCsvFragment = require.keys.unbox(
+const mintCsvFragment = require.moduleKeys.unbox(
     Mintable.minterFor(CsvFragment), null,
     (x) => String(x))
 
@@ -339,7 +339,7 @@ module fetches them thus
 
 ```js
 const isCsvFragment = Mintable.verifierFor(CsvFragment)
-const mintCsvFragment = require.keys.unbox(
+const mintCsvFragment = require.moduleKeys.unbox(
     Mintable.minterFor(CsvFragment), null,
     (x) => String(x))
 ```

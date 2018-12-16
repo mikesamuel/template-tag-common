@@ -456,7 +456,7 @@ bar
     const verifier = Mintable.verifierFor(MyTypedString)
 
     it('mints', () => {
-      const instance = require.keys.unboxStrict(
+      const instance = require.moduleKeys.unboxStrict(
         Mintable.minterFor(MyTypedString))(
         'foo')
 
@@ -465,7 +465,7 @@ bar
       expect(verifier(instance)).to.equal(true)
     })
     it('read-only', () => {
-      const instance = require.keys.unboxStrict(
+      const instance = require.moduleKeys.unboxStrict(
         Mintable.minterFor(MyTypedString))(
         'foo')
       expect(
@@ -500,7 +500,7 @@ bar
 
       const isCsvFragment = Mintable.verifierFor(CsvFragment)
       // Assumes module-keys/babel plugin
-      const mintCsvFragment = require.keys.unbox(
+      const mintCsvFragment = require.moduleKeys.unbox(
         Mintable.minterFor(CsvFragment), null,
         (x) => String(x))
 
