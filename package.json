@@ -1,7 +1,7 @@
 {
   "name": "template-tag-common",
   "description": "Simplifies authoring JS template tags like foo`...`",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "keywords": [
     "template-tag",
     "string-template",
