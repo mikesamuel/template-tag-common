@@ -33,8 +33,8 @@
   },
   "dependencies": {
     "an-lru-cache": "^1.0.5",
-    "module-keys": "^2.0.1",
-    "node-sec-patterns": "^3.0.1"
+    "module-keys": "^2.0.2",
+    "node-sec-patterns": "^3.0.2"
   },
   "devDependencies": {
     "babel": "^6.23.0",
